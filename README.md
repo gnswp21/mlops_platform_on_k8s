@@ -56,4 +56,10 @@ kubectl patch storageclass gp2 --patch '{\"metadata\": {\"annotations\": {\"stor
 도커 빌드를 make를 이용해 자동화하는데 처음 보는 거라 처음에 읽기 어려웠음. 그래도 보다보니 환경변수를 설정하고 그거에 따라 통합적으로 빌드하는 시스템인것을 확인. 핵심은 kubeflow측에서 도커허브 저장한 이미지를 FROM으로 넣고 내 이미지를 제작하면 간단하게 만들 수 있었음. 그 외에도 아예 커스텀하게 만드는 방법도 있는듯 하지만 이는 s6 overlay에 대해 공부해야할듯해보여서 지금은 넘어갈 계획
 
 
+8. dex static new 유저
+dex에 새 static 유저를 추가하는 과정에서, hashFromEnv라는 항목이 있는데, 이 ENV가 어느 환경 기준인지 확인이 어려웠다. 덱스 파드로 exec 해보려했지만 bash가 없었다. 
+
+해결 -> manifest/common/dex ..를 들어가보니 secret에 사용된 환경변수가 있는걸 확인했다. 여기에 추가할 수 있겠다.
+
+
 
