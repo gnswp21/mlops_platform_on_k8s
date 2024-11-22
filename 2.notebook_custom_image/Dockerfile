@@ -21,3 +21,21 @@ RUN mamba install -y -q \
 COPY --chown=${NB_USER}:${NB_GID} requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install -r /tmp/requirements.txt --quiet --no-cache-dir \
     && rm -f /tmp/requirements.txt
+
+
+# insatll JAVA
+# 루트 권한으로 전환
+USER root
+
+# Java 설치
+RUN apt-get update && apt-get install -y openjdk-11-jdk && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 다시 기본 사용자로 전환
+USER $NB_USER
+
+# 환경 변수 설정 (필요 시)
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+

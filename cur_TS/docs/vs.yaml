@@ -1,0 +1,79 @@
+# (여기 수정된 VirtualService 내용을 붙여넣습니다)
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  annotations:
+    networking.internal.knative.dev/rollout: '{"configurations":[{"configurationName":"sklearn-iris-predictor","percent":100,"revisions":[{"revisionName":"sklearn-iris-predictor-00001","percent":100}],"stepParams":{}}]}'
+    networking.knative.dev/ingress.class: istio.ingress.networking.knative.dev
+    serving.knative.dev/creator: system:serviceaccount:kubeflow:kserve-controller-manager
+    serving.knative.dev/lastModifier: system:serviceaccount:kubeflow:kserve-controller-manager
+  creationTimestamp: "2024-11-19T08:27:20Z"
+  generation: 1
+  labels:
+    networking.internal.knative.dev/ingress: sklearn-iris-predictor
+    serving.knative.dev/route: sklearn-iris-predictor
+    serving.knative.dev/routeNamespace: kserve-test
+  name: sklearn-iris-predictor-ingress
+  namespace: kserve-test
+  ownerReferences:
+  - apiVersion: networking.internal.knative.dev/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ingress
+    name: sklearn-iris-predictor
+    uid: 112eba78-e5d3-4a87-8ac9-8dde28af771c
+  resourceVersion: "6729894"
+  uid: 3b802f02-49aa-47d3-9b72-13c8631c061a
+spec:
+  gateways:
+  - knative-serving/knative-local-gateway
+  - istio-system/istio-ingressgateway
+  hosts:
+  - sklearn-iris-predictor.kserve-test
+  - sklearn-iris-predictor.kserve-test.svc
+  - sklearn-iris-predictor.kserve-test.svc.cluster.local
+  - "*"
+  http:
+  - headers:
+      request:
+        set:
+          K-Network-Hash: 86ab40e9433c16e6191afdcb977102d3eea090d4c08edc58de623d65fa1808b1
+    match:
+    - authority:
+        prefix: sklearn-iris-predictor.kserve-test
+      gateways:
+      - knative-serving/knative-local-gateway
+      - istio-system/istio-ingressgateway
+      headers:
+        K-Network-Hash:
+          exact: override
+    retries: {}
+    route:
+    - destination:
+        host: sklearn-iris-predictor-00001.kserve-test.svc.cluster.local
+        port:
+          number: 80
+      headers:
+        request:
+          set:
+            Knative-Serving-Namespace: kserve-test
+            Knative-Serving-Revision: sklearn-iris-predictor-00001
+      weight: 100
+  - match:
+    - authority:
+        prefix: sklearn-iris-predictor.kserve-test
+      gateways:
+      - knative-serving/knative-local-gateway
+      - istio-system/istio-ingressgateway
+    retries: {}
+    route:
+    - destination:
+        host: sklearn-iris-predictor-00001.kserve-test.svc.cluster.local
+        port:
+          number: 80
+      headers:
+        request:
+          set:
+            Knative-Serving-Namespace: kserve-test
+            Knative-Serving-Revision: sklearn-iris-predictor-00001
+      weight: 100

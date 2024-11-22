@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-secret
+  namespace: kubeflow-user-example-com
+type: Opaque
+data:
+  AWS_ACCESS_KEY_ID: dkwzQW92VXBsakVqRnVmd3UzSUE=
+  AWS_SECRET_ACCESS_KEY: WVdMNWhzMkI4Q0xxYVhzN0tHcDBxemY2SnRrMmxmQ0NnT0pMUFQ5eA==
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s3-sa
+  namespace: kubeflow-user-example-com
+secrets:
+  - name: s3-secret

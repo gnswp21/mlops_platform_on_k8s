@@ -1,0 +1,31 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: ClusterServingRuntime
+metadata:
+  name: kserve-mlflowserver
+spec:
+  annotations:
+    prometheus.kserve.io/path: /metrics
+    prometheus.kserve.io/port: "8080"
+  containers:
+  - image: seldonio/mlserver:1.5.0
+    name: kserve-container
+    env:
+    - name: MLSERVER_MODEL_IMPLEMENTATION
+      value: mlflow
+    - name: MLSERVER_HTTP_PORT
+      value: "8080"
+    - name: MLSERVER_GRPC_PORT
+      value: "9000"
+    - name: MODELS_DIR
+      value: /mnt/models
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "1"
+        memory: 2Gi
+  supportedModelFormats:
+  - name: mlflow
+    version: "1"
+    autoSelect: true

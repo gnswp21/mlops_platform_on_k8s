@@ -1,0 +1,12 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "irish-s3"
+spec:
+  predictor:
+    serviceAccountName: sa
+    model:
+      modelFormat:
+        name: mlflow
+      protocolVersion: v2
+      storageUri: "s3://mlflow/1/8b60da388c9547c3b6728a07aa794bf0/artifacts/iris_model"
