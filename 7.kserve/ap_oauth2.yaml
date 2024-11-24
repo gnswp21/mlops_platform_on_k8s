@@ -13,4 +13,4 @@ spec:
   rules:
   - to:
     - operation:
-        notPaths: ["/v1*", "/v2*"]
+        notPaths: ["/v3*"]

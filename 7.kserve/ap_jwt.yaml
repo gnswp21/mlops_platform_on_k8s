@@ -1,0 +1,30 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"security.istio.io/v1beta1","kind":"AuthorizationPolicy","metadata":{"annotations":{},"name":"istio-ingressgateway-require-jwt","namespace":"istio-system"},"spec":{"action":"DENY","rules":[{"from":[{"source":{"notRequestPrincipals":["*"]}}],"to":[{"operation":{"notPaths":["/dex/*","/dex/**","/oauth2/*"]}}]}],"selector":{"matchLabels":{"app":"istio-ingressgateway"}}}}
+  creationTimestamp: "2024-11-14T06:55:32Z"
+  generation: 2
+  name: istio-ingressgateway-require-jwt
+  namespace: istio-system
+  resourceVersion: "13253374"
+  uid: 9b34e6bc-3808-49a1-bc3e-d12c3d16b5d1
+spec:
+  action: DENY
+  rules:
+  - from:
+    - source:
+        notRequestPrincipals:
+        - '*'
+    to:
+    - operation:
+        notPaths:
+        - /dex/*
+        - /dex/**
+        - /oauth2/*
+        - /v1/*
+        - /v2/*
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
