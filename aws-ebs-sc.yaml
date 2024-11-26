@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aws-ebs-sc
+provisioner: kubernetes.io/aws-ebs  # 기존 인트리 EBS 플러그인 사용
+parameters:
+  type: gp2  # 원하는 EBS 볼륨 유형 (gp2, io1, sc1, st1 등)
+  fsType: ext4  # 파일 시스템 유형 (ext4, xfs 등)
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
