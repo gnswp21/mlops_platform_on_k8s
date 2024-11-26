@@ -272,6 +272,7 @@ jwt 우회 설정을 사용하기로 결정
 예제의 v1 protocal 과  mlflow의 v2 protocal의 형식이 달라서 생긴 문제
 URL과 input의 형식을 수정하니 잘 됐다.
 
+참고(https://github.com/kserve/kserve/tree/master/docs/predict-api/v2)
 
 
 
