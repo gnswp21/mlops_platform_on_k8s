@@ -35,7 +35,9 @@
 위의 두 과정을 통해 기본적인 kubeflow 사용이 가능해진다.
 
 ### 운영 튜토리얼
-- [커스텀 노트북 설치]
+- [커스텀 노트북 설치](/2.notebook_custom_image/notebook_tutorial.md)
+- [덱스 새로운 스태틱 유저 추가](/3.dex_add_new_user/3.dex_add_new_user_tutorial.md)
+- []
 
 
 ##  트러블슈팅
