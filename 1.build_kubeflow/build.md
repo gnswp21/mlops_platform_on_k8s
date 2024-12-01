@@ -3,18 +3,20 @@
 
 `ver kubeflow 1.9.1`
 
-
-
 요구사항 (문서)
 - 16코어 32GB메모리
-- 50GB
-- kbind 
+- 50GB의 저장공간
+- kbind |  default stroageclass가 설정된 k8s 클러스터
 
 요구사항 (경험)
 - 단지 구성이 목적이라면 8코어에도 아슬아슬하게 설치가능(쿠브플로 파이프라인이 코어를 많이 요구하므로 제외한다면 더 낮은 코어에서도 설치가능)
-- kbind외의 클라우드, 온프레미스 등 모든 k8s에 manifest를 통해 설치가능
+- kbind외의 클라우드, 온프레미스 등 모든 k8s에 manifest를 통해 설치 가능
 - 일반 k8s를 사용한다면 default stroageclass가 설정되어있는것이 중요 (pvc가 bound 안되면 이 부분이 문제 -> eks는 default storageclass 설정이 안되어 있으므로 주의)
-  
+
+
+
+## 0. kubeflow 깃허브 클론
+
 
 ```
 git clone https://github.com/kubeflow/manifests.git --branch 1.9.1
@@ -22,9 +24,30 @@ cd manifest
 ```
 
 
-## 1 docker login
+## 1. docker login 정보 제공
+kubeflow 공식문서에 따라, 도커 이미지 다운을 위한 로그인 정보를 k8s 클러스터에 제공한다.
 
-### powershell
+- linux 환경의 경우 docker login을 함으로써 로그인정보가 담긴 `dockerconfigjson` 파일이 생성된다.
+- 도커 데스크톱을 사용하는 환경에서는 `dockerconfigjson` 파일에 로그인 정보가 담기지 않는다. (로그인을 앱을 통해 관되되므로) 따라서, 해당 파일을 직접 써서 제공하였다.
+  
+
+`temp.json`
+```
+{
+    "auths": {
+        "https://index.docker.io/v1/": {
+            "auth": "BASE64(ID:PASSWORD)"
+        }
+    }
+}
+
+위의 파일을 예시로 auth의 value 값에 BASE64로 인코딩된 실제로 도커 허브 로그인에 사용되는 ID:PASSWORD를 지정해주었다.
+
+
+```
+
+### sercret 생성
+(powershell)
 ```
  kubectl create secret generic regcred `
     --from-file=.dockerconfigjson=$HOME\Projects\mlops\mlops_platform_on_k8s\1.build_kubeflow\temp.json `
@@ -32,87 +55,11 @@ cd manifest
 ```
 
 
-## 2 eks make default stroageclass (if gcp then pass to 3)
 
-```
-helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm repo update
-
-helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver `
-  --namespace kube-system `
-  --set controller.serviceAccount.create=true
-
-
-eksctl create iamserviceaccount `
-  --name ebs-csi-controller-sa `
-  --namespace kube-system `
-  --cluster my-kube-1 `
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy `
-  --approve `
-  --override-existing-serviceaccounts
-
-```
-# linux
-aws eks update-kubeconfig --region ap-northeast-2 --name temp-kubeflow-1
-## 1.  eks 설치
-export CLUSTER_NAME=temp-kubeflow-1
-export NODES=4
-export INSTANCE_TYPES=m5.xlarge
-eksctl create cluster --name $CLUSTER_NAME --with-oidc --instance-types=$INSTANCE_TYPES --managed --nodes=$NODES
-
-## 2. aws-ebs-csi-driver를 프로비저너로 사용하는 default storageclass 생성,   (kubeflow pvc 설정에 의거해)
-kubectl apply -f default-storage-class.yaml
-
-
-<!-- ## 3. 노드그룹 IAM 권한설정
-eksctl create iamserviceaccount \
-  --name ebs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster $CLUSTER_NAME \
-  --attach-policy-arn arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy \
-  --approve \
-  --override-existing-serviceaccounts -->
-
-## 노드 그룹 역할에 EBSCSIDriverPolicy 추가
-
-## aws ebs csi 드라이버 설치
-  
-helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm repo update
-helm install aws-ebs-csi aws-ebs-csi-driver/aws-ebs-csi-driver --namespace kube-system
-
-
-
-## 노드그룹에  ebs csi 드라이버 추가 IAM 권한
-
-
-
-<!-- helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm repo update
-
-helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
-  --namespace kube-system \
-  --set controller.serviceAccount.create=true -->
-
-cd manifests
-while ! kustomize build example | kubectl apply -f -; do echo "Retrying to apply resources"; sleep 20; done
-
-
-
-
-
-## 3 apply
+## 2 apply
 설치하려는 구성요소에 따라 두가지 선택지 제시됨
 ## all kubeflow
 
-### powershell
-
-```
-while (-not (& kustomize build example | kubectl apply -f -)) {
-    Write-Output "Retrying to apply resources"
-    Start-Sleep -Seconds 20
-}
-```
 
 ### linux
 ```
@@ -323,3 +270,15 @@ kubectl delete namespace kubeflow-user-example-com
 
 
 # 트러블슈팅
+
+## 파드생성불가능-1
+파드 생성이 pending 될 경우, cpu 코어나 메모미, 저장공간이 충분하지 확인해보자.
+`kubectl  describe 파드명 -n 파드의 네임스페이스` 를 톻해 상태를 확인해보자
+
+
+## 파드생성불가능-2
+위에서 언급한대로 `default storageclass`가 설정되어 있지 않으면 pvc가 bound 되지 않아 mysql 등의 파드들이 생성되지 않는다.
+
+`kubectl get pvc -A` 를 통해 바운드 되지 않은 pvc가 있는지 확인한다.
+
+
