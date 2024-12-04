@@ -9,4 +9,4 @@ spec:
       modelFormat:
         name: mlflow
       protocolVersion: v2
-      storageUri: "s3://mlflow/1/8b60da388c9547c3b6728a07aa794bf0/artifacts/iris_model"
+      storageUri: "s3://mlflow/1/0a16c81425b741359e21f30d9894c6b6/artifacts/iris_model/"

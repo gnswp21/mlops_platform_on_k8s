@@ -19,7 +19,7 @@
 
 
 ```
-git clone https://github.com/kubeflow/manifests.git --branch 1.9.1
+#git clone https://github.com/kubeflow/manifests.git --branch 1.9.1
 cd manifest
 ```
 
@@ -47,202 +47,29 @@ kubeflow 공식문서에 따라, 도커 이미지 다운을 위한 로그인 정
 ```
 
 ### sercret 생성
-(powershell)
+
 ```
- kubectl create secret generic regcred `
-    --from-file=.dockerconfigjson=$HOME\Projects\mlops\mlops_platform_on_k8s\1.build_kubeflow\temp.json `
+ kubectl create secret generic regcred \
+    --from-file=.dockerconfigjson=temp.json \
     --type=kubernetes.io/dockerconfigjson
 ```
 
 
 
-## 2 apply
+## 2. apply
 설치하려는 구성요소에 따라 두가지 선택지 제시됨
-## all kubeflow
 
 
-### linux
+
 ```
+cd manifests
 while ! kustomize build example | kubectl apply --server-side --force-conflicts -f -; do echo "Retrying to apply resources"; sleep 20; done
 ```
+위의 코드로 간단하게 모든 kubeflow 요소를 설치한다.
 
-## specific kubeflow
-### must install
-- cert manager
-
-```
-kustomize build common/cert-manager/cert-manager/base | kubectl apply -f -
-kustomize build common/cert-manager/kubeflow-issuer/base | kubectl apply -f -
-echo "Waiting for cert-manager to be ready ..."
-kubectl wait --for=condition=ready pod -l 'app in (cert-manager,webhook)' --timeout=180s -n cert-manager
-kubectl wait --for=jsonpath='{.subsets[0].addresses[0].targetRef.kind}'=Pod endpoints -l 'app in (cert-manager,webhook)' --timeout=180s -n cert-manager
-
-```
-
-- istio
-```
-echo "Installing Istio configured with external authorization..."
-kustomize build common/istio-1-23/istio-crds/base | kubectl apply -f -
-kustomize build common/istio-1-23/istio-namespace/base | kubectl apply -f -
-kustomize build common/istio-1-23/istio-install/overlays/oauth2-proxy | kubectl apply -f -
-
-echo "Waiting for all Istio Pods to become ready..."
-kubectl wait --for=condition=Ready pods --all -n istio-system --timeout 300s
-```
-
-
-- Oauth2-proxy
-```
-echo "Installing oauth2-proxy..."
-
-# Only uncomment ONE of the following overlays, they are mutually exclusive,
-# see `common/oauth2-proxy/overlays/` for more options.
-
-# OPTION 1: works on most clusters, does NOT allow K8s service account 
-#           tokens to be used from outside the cluster via the Istio ingress-gateway.
-#
-kustomize build common/oauth2-proxy/overlays/m2m-dex-only/ | kubectl apply -f -
-kubectl wait --for=condition=ready pod -l 'app.kubernetes.io/name=oauth2-proxy' --timeout=180s -n oauth2-proxy
-
-# Option 2: works on Kind/K3D and other clusters with the proper configuration, and allows K8s service account tokens to be used
-#           from outside the cluster via the Istio ingress-gateway. For example for automation with github actions.
-# 
-#kustomize build common/oauth2-proxy/overlays/m2m-dex-and-kind/ | kubectl apply -f -
-#kubectl wait --for=condition=ready pod -l 'app.kubernetes.io/name=oauth2-proxy' --timeout=180s -n oauth2-proxy
-#kubectl wait --for=condition=ready pod -l 'app.kubernetes.io/name=cluster-jwks-proxy' --timeout=180s -n istio-system
-```
-
-- dex
-```
-echo "Installing Dex..."
-kustomize build common/dex/overlays/oauth2-proxy | kubectl apply -f -
-kubectl wait --for=condition=ready pods --all --timeout=180s -n auth
-```
-
-
-- namespace
-```
-kustomize build common/kubeflow-namespace/base | kubectl apply -f -
-```
-
-- network policy
-```
-kustomize build common/networkpolicies/base | kubectl apply -f -
-```
-
-- kubeflow roles
-```
-kustomize build common/kubeflow-roles/base | kubectl apply -f -
-```
-
-- Kubeflow Istio Resources
-```
-kustomize build common/istio-1-23/kubeflow-istio-resources/base | kubectl apply -f -
-```
-
-- Katib
-
-```
-kustomize build apps/katib/upstream/installs/katib-with-kubeflow | kubectl apply -f -
-```
-Katib는 kubeflow의 AutoML 구성요소이지만, 노트북 실행시 katib가 없다면 에러가 발생 (ex. katib webhook ...)
-
-- Central Dashboard
-
-```
-kustomize build apps/centraldashboard/overlays/oauth2-proxy | kubectl apply -f -
-```
-
-
--  Admission Webhook
-```
-kustomize build apps/admission-webhook/upstream/overlays/cert-manager | kubectl apply -f -
-```
-
-
-- Notebooks 1.0
-```
-kustomize build apps/jupyter/notebook-controller/upstream/overlays/kubeflow | kubectl apply -f -
-```
-
-- Jupyter Web App for notebook
-```
-kustomize build apps/jupyter/jupyter-web-app/upstream/overlays/istio | kubectl apply -f -
-```
-
-- PVC Viewer Controller
-```
-kustomize build apps/pvcviewer-controller/upstream/default | kubectl apply -f -
-```
-
-- Profiles + KFAM
-```
-kustomize build apps/profiles/upstream/overlays/kubeflow | kubectl apply -f -
-```
-
-- Volums Web Application
-
-```
-kustomize build apps/volumes-web-app/upstream/overlays/istio | kubectl apply -f -
-
-```
-
-
-
-
-  
-
-### optional
-
-- Knative for KServe
-
-```
-kustomize build common/knative/knative-serving/overlays/gateways | kubectl apply -f -
-kustomize build common/istio-1-23/cluster-local-gateway/base | kubectl apply -f -
-
-```
-- KServe
-
-```
-kustomize build contrib/kserve/kserve | kubectl apply --server-side --force-conflicts -f -
-```
-
-- model web application for KServe
-```
-kustomize build contrib/kserve/models-web-app/overlays/kubeflow | kubectl apply -f -
-```
-
-
-
-- kubeflow pielines (include argo)
-
-```
-kustomize build apps/pipeline/upstream/env/cert-manager/platform-agnostic-multi-user | kubectl apply -f -
-```
-
-
-- Tensorboard
-```
-kustomize build apps/tensorboard/tensorboards-web-app/upstream/overlays/istio | kubectl apply -f -
-```
-
-- Tensorboard Controller
-```
-kustomize build apps/tensorboard/tensorboard-controller/upstream/overlays/kubeflow | kubectl apply -f -
-```
-- Training Operator
-```
-kustomize build apps/training-operator/upstream/overlays/kubeflow | kubectl apply -f -
-```
-
-- User Namespaces
-```
-kustomize build common/user-namespace/base | kubectl apply -f -
-```
-
-kubectl apply -f C:\Users\family\Projects\mlops\mlops_platform_on_k8s\aws-ebs-sc.yaml
-
-
+### specific kubeflow
+- [kubeflow component 선택적 설치](/1.build_kubeflow/build_op.md)
+  - 이 방식은 kubeflow의 요소를 하나씩 설치하는 방법으로 일부 요소만 선택적으로 설치하고 싶을 때 사용하자.
 
 
 # 생성 확인
@@ -254,10 +81,19 @@ kubectl get pods -n knative-serving
 kubectl get pods -n kubeflow
 kubectl get pods -n kubeflow-user-example-com
 
-# 대시보드 포트포워딩 
-kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80
+# 클러스터 외부 노출
+## 인그레스 포트포워딩
+`kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80`
 
-기본유저 아이디 : user@example.com 비밀번호 : 12341234
+## 로드밸런서 사용
+
+`kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'`
+
+위 두가지 방법 중 하나로 istio를 외부로 노출시키자
+
+
+## dex UI 로그인 정보
+- 기본유저 아이디 : user@example.com 비밀번호 : 12341234
 
 # 삭제
 kubectl delete namespace cert-manager
@@ -267,18 +103,4 @@ kubectl delete namespace knative-eventing
 kubectl delete namespace knative-serving
 kubectl delete namespace kubeflow
 kubectl delete namespace kubeflow-user-example-com
-
-
-# 트러블슈팅
-
-## 파드생성불가능-1
-파드 생성이 pending 될 경우, cpu 코어나 메모미, 저장공간이 충분하지 확인해보자.
-`kubectl  describe 파드명 -n 파드의 네임스페이스` 를 톻해 상태를 확인해보자
-
-
-## 파드생성불가능-2
-위에서 언급한대로 `default storageclass`가 설정되어 있지 않으면 pvc가 bound 되지 않아 mysql 등의 파드들이 생성되지 않는다.
-
-`kubectl get pvc -A` 를 통해 바운드 되지 않은 pvc가 있는지 확인한다.
-
 
