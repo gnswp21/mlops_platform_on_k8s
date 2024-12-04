@@ -22,6 +22,11 @@
 6. 외부에 노출된 모델 서빙. 모델 IP 제공 (W. KServe)
 
 ## 데모 영상
+[Watch the video](/9.trobleshooting-image/kubeflow_demo.mp4)
+<video width="640" height="360" controls>
+    <source src="./9.trobleshooting-image/kubeflow_demo.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
 
 
 
