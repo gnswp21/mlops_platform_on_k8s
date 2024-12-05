@@ -244,7 +244,7 @@ nomadic-asset-441010-q1/locations/asia-northeast3/clusters/cluster-1",
 - [mlflow 엔드포인트 요청 형식](https://kserve.github.io/website/latest/modelserving/v1beta1/mlflow/v2/#testing-deployed-model)
 
 ---
-### 11. kserve 운영 | inferenceservice의 403, 404 | 해결중
+### 11. kserve 운영 | inferenceservice의 403, 404 | 해결
 
 *상황*
 - 재설치한 kserve에 외부에서 외부엔드포인트로 요청시 403 에러가 발생
