@@ -22,7 +22,7 @@
 6. 외부에 노출된 모델 서빙. 모델 IP 제공 (W. KServe)
 
 ## 데모 영상
-[Watch the video](/9.trobleshooting-image/kubeflow_demo.mp4)
+
 <video width="640" height="360" controls>
     <source src="./9.trobleshooting-image/kubeflow_demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
@@ -58,7 +58,7 @@ https://github.com/user-attachments/assets/e4c6fadd-81e0-4cf5-838d-b58c3c2a1d41
 - [덱스 새로운 스태틱 유저 추가](/3.dex_add_new_user/3.dex_add_new_user_tutorial.md)
 - [새 프로필 생성](/4.add_new_profile/4.add_new_profile.md)
 - [mlflow 결합하여 실험추적 및 모델 레지스티리](/8.mlflow/mlflow_tutorial.md)
-- [KServe로 모델 외부 포인트에 노출](/7.kserve/tutorial.md)
+- [KServe로 모델 외부 포인트에 노출](/7.kserve/kserve_tutorial.md.md)
 
 
 
