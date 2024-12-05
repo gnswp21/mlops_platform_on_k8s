@@ -11,7 +11,7 @@ spec:
   ##       them from adding/removing contributors
   owner:
     kind: User
-    name: test@example.com
+    name: demo@example.com
 
   ## plugins extend the functionality of the profile
   ## https://github.com/kubeflow/kubeflow/tree/master/components/profile-controller#plugins

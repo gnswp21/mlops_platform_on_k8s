@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  my_service:
+    image: user # 'user'로 빌드한 이미지를 사용합니다.
+    container_name: user
+    volumes:
+      - ../:/pr
+      - kube_config:/root/.kube
+    working_dir: /pr
+    command: [ "sleep", "infinity" ] # bash 셸로 접속합니다.
+volumes:
+  kube_config:
+    driver: local

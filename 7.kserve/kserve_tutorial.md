@@ -12,44 +12,38 @@
 ## 설치
 
 ### 참고
-[kserve mlflow](https://kserve.github.io/website/latest/modelserving/v1beta1/mlflow/v2/#deploy-with-inferenceservice)
-[kserve s3](https://kserve.github.io/website/latest/modelserving/storage/s3/s3/)
+- [kserve mlflow](https://kserve.github.io/website/latest/modelserving/v1beta1/mlflow/v2/#deploy-with-inferenceservice)
+- [kserve s3](https://kserve.github.io/website/latest/modelserving/storage/s3/s3/)
+- [kserve 엔드포인트 rbac 문제 해결 개인블로그](https://kyeongseo.tistory.com/entry/kserve-%EC%82%AC%EC%9A%A9-%EB%B0%8F-%EC%84%A4%EC%A0%95-%EA%B0%80%EC%9D%B4%EB%93%9C) 
 
-위의 두 페이지를 참고해 제작하였다.
+위의 페이지를 참고해 제작하였다.
+
+### 0. 매직 DNS 생성
+
+매직 dns 서비스를 적용하면 개발 및 테스트 환경에서 복잡한 DNS 구성 없이도 서비스에 쉽게 접근할 수 있다.
+ 
+
+```
+kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.15.2/serving-default-domain.yaml
+ ```
+위 명령어를 사용해 istio-ingressgateway service의 type을 LoadBalancer로 변경한다.
+
+Knative Serving 환경에서 sslip.io를 기본 도메인을 설정하는 Job과 관련 Service를 적용한다.
+ 
 
 
-### inferenceservice가 사용할 secret, serviceaccount 생성
+ 
+
+
+### 1. inferenceservice가 사용할 secret, serviceaccount 생성
 
 - inferenceservice는 minio에 저장된 mlflow 모델을 파드 생성시에 다운 받는다. 
 - 이 떄, minio와의 통신을 위해 적합한 증명이 필요하게된다.이를 위해 secret, serviceaccount 생성한다.
 
 - sa.yaml
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: s3creds
-  namespace: kubeflow-user-example-com
-  annotations:
-     serving.kserve.io/s3-endpoint: minio-service.kubeflow:9000 # replace with your s3 endpoint e.g minio-service.kubeflow:9000
-     serving.kserve.io/s3-usehttps: "0" # by default 1, if testing with minio you can set to 0
-     serving.kserve.io/s3-region: "us-east-1"
-     serving.kserve.io/s3-useanoncredential: "false" # omitting this is the same as false, if true will ignore provided credential and use anonymous credentials
-type: Opaque
-stringData: # use `stringData` for raw credential string or `data` for base64 encoded string
-  AWS_ACCESS_KEY_ID: minio
-  AWS_SECRET_ACCESS_KEY: minio123
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: sa
-  namespace: kubeflow-user-example-com
-secrets:
-- name: s3creds
-
-```
+`kubectl apply -f sa.yaml`
 
 ### 2. kubeflow 대쉬보드 UI를 통해 inferenceservice 생성
 대쉬보드에 직접 yaml 파일을 붙여넣기 해도 되고 평범하게 apply로도 생성이 가능하다.
@@ -71,20 +65,29 @@ spec:
       modelFormat:
         name: mlflow
       protocolVersion: v2
-      storageUri: "s3://mlflow/1/8b60da388c9547c3b6728a07aa794bf0/artifacts/iris_model"
+      storageUri: "s3://mlflow/1/d9a3dd7164bd423b9482ab8a77316c33/artifacts/iris_model"
 
 ```
 
-정상적으로 배포되었다면 InferenceService ready되었다고 나온다. 이제 UI를 통해 모델의 내부/외부 엔드포인트를 확인해볼 수 있다.
 
+정상적으로 배포되었다면 InferenceService ready되었다고 나온다. 이제 UI를 통해 모델의 내부/외부 엔드포인트를 확인해볼 수 있다.
+- 확인
+`kubectl get inferenceservice -A`
+
+![사진](/9.trobleshooting-image/ks.png)
 
 
 
 ### 3. rbac 에러를 방지하기 위해 istio의 차단 정책을 우회 (by. authorizationpolicy)
 
-kubeflow는 istio 기반으로한 k8s 서비스매쉬를 지향한다. istio는 각 구성요서간의 통신을 더 세밀하게 조정할 수 있게 해준다. 기본으로 적용된 istio 정책은 폐쇠적인 정책을 가지고있다. 위에서 배포된 모델에 접근해보면 내부/외부에서 모두 rbac 에러가 발생한다. 
+kubeflow는 istio 기반으로한 k8s 서비스매쉬를 지향한다. istio는 각 구성요간의 통신을 더 세밀하게 조정할 수 있게 해준다. 기본으로 적용된 istio 정책은 폐쇠적인 정책을 가지고있다. 위에서 배포된 모델에 접근해보면 내부/외부에서 모두 rbac 에러가 발생한다. 
 
 따라서, 우회 정책을 생성한다.
+
+`차단정책`
+1. istio 경로 차단 -> `ap_path.yaml` 으로 우회
+2. istio의 oidc 프록시 인증 요구 -> `ap.yaml` 으로 우회
+3. istio jwt 요구 -> `ap_jwt.yaml`으로 우회
 
 - ap_path.yaml
 
@@ -139,8 +142,10 @@ spec:
         - /dex/*
         - /dex/**
         - /oauth2/*
+        ## 이부분부터 추가한다.
         - /v1/*
         - /v2/*
+        ## 여기까지 추가한다.
   selector:
     matchLabels:
       app: istio-ingressgateway
@@ -151,8 +156,38 @@ spec:
 
 따라서, 이 경우에는 jwt 검사를 우회하는 것으로 해결했다. 위의 두 정책이 적용되면 (inferenecservie 재시작할 필요x) 모델이 내부 외부에서 잘 접근이 가능한 것을 알 수 있다.
 
-- 확인
-`kubectl get inferenceservice -A`
+- ap.yaml
+```
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: istio-ingressgateway-oauth2-proxy
+  namespace: istio-system
+spec:
+  action: CUSTOM
+  provider:
+    name: oauth2-proxy
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  rules:
+  - to:
+    - operation:
+        notPaths: ["/v1*", "/v2*"]
+```
+모델에 요청을 보냈는데, 외부에서 요청시 dex 로그인을 요구하거나, 내부에서 요청시 404에러가 뜬다면 위의 AuthorizationPolicy가 필요하다.
+
+oauth2-proxy에 우회경로를 설정해주어 모델 요청시 dex 로그인이 필요없게된다.
+
+
+
+```
+kubectl apply -f ap_path.yaml
+kubectl apply -f ap.yaml
+kubectl edit Authorizationpolicy istio-ingressgateway-require-jwt -n istio-system
+
+```
+
 
 
 ### 4. k8s 내부/외부에서 정상적으로 접근 가능한 모델 배포 완료

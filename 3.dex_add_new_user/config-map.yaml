@@ -22,15 +22,11 @@ data:
       hashFromEnv: DEX_USER_PASSWORD
       username: user
       userID: "15841185641784"
-    - email: test@example.com
-      hash: $2b$12$8zubV2AY8plT2gLdn7P4vOiKB16FGZXvMFJ3/bQ/COL9o5oWUPFby
-      username: test
-      userID: "15841185641785"
  
-    - email: test3@example.com
+    - email: demo@example.com
       hashFromEnv: DEX_USER_PASSWORD
-      username: test2
-      userID: "15841185641786"
+      username: demo
+      userID: "15841185641788"
 
     staticClients:
     # https://github.com/dexidp/dex/pull/1664
