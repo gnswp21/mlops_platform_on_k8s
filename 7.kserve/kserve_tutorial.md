@@ -195,10 +195,8 @@ kubectl edit Authorizationpolicy istio-ingressgateway-require-jwt -n istio-syste
 inferenceservice를 생성할 때, 모델의 프로토콜을 v2로 하였기에 이 부분에 주의하여 요청을 날려보자. 
 
 - 모델 요청 코드
-```
-```
 
-![모델 배포 이미지]()
+[모델 요청](/7.kserve/send_request.ipynb)
 
 
 

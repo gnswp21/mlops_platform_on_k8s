@@ -61,11 +61,6 @@ ID : user
 PASSWORD : kubectl get secret --namespace mlflow mlflow-tracking -o jsonpath="{.data.admin-password }" | base64 -d
 
 
-![이미지]()
-
-
-
-
 
 
 ## 실험 추적 및 모델 레지스트리
@@ -84,12 +79,10 @@ mlflow가 설치된 쥬피터 노트북에서 다음 두가지 셀을 통해 모
 위 과정들을 통해 실험과 실험에 사용된 모델이 mlflow를 통해 minio에 저장된다.
 minio UI, mlflow 트랙킹 서버 UI 양측에서 확인 가능하다
 
-![minio UI 이미지]()
-![mlflow UI 이미지]()
 
 
-
-### 참고: https://suwani.tistory.com/169
+### 참고
+https://suwani.tistory.com/169
 
 
 
